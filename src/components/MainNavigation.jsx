@@ -14,34 +14,47 @@ import {
   Tooltip
 } from '@mui/material'
 import {
-  LocalHospitalOutlined,
-  AnalyticsOutlined,
   PeopleOutlined,
-  FitnessCenterOutlined,
   AssignmentOutlined,
-  CalendarMonthOutlined,
-  HistoryOutlined,
   SettingsOutlined,
   HelpOutlined,
   ChevronLeftOutlined,
-  ChevronRightOutlined
+  ChevronRightOutlined,
+  DashboardOutlined,
+  FavoriteOutlined,
+  MessageOutlined,
+  CalendarMonthOutlined
 } from '@mui/icons-material'
 import '../styles/design-tokens.css'
 
 // Navigation items configuration
 const navigationItems = [
   { 
-    id: 'medical', 
-    label: 'Medical', 
-    icon: LocalHospitalOutlined, 
-    path: '/medical',
+    id: 'dashboard', 
+    label: 'Dashboard', 
+    icon: DashboardOutlined, 
+    path: '/dashboard',
     section: 'main'
   },
   { 
-    id: 'analysis', 
-    label: 'Analysis', 
-    icon: AnalyticsOutlined, 
-    path: '/analysis',
+    id: 'schedule', 
+    label: 'Schedule', 
+    icon: CalendarMonthOutlined, 
+    path: '/schedule',
+    section: 'main'
+  },
+  { 
+    id: 'favorites', 
+    label: 'Favorites', 
+    icon: FavoriteOutlined, 
+    path: '/favorites',
+    section: 'main'
+  },
+  { 
+    id: 'messaging', 
+    label: 'Messaging', 
+    icon: MessageOutlined, 
+    path: '/messaging',
     section: 'main'
   },
   { 
@@ -52,13 +65,6 @@ const navigationItems = [
     section: 'main'
   },
   { 
-    id: 'workload', 
-    label: 'Workload', 
-    icon: FitnessCenterOutlined, 
-    path: '/workloads',
-    section: 'main'
-  },
-  { 
     id: 'forms', 
     label: 'Forms', 
     icon: AssignmentOutlined, 
@@ -66,22 +72,8 @@ const navigationItems = [
     section: 'main'
   },
   { 
-    id: 'calendar', 
-    label: 'Calendar', 
-    icon: CalendarMonthOutlined, 
-    path: '/planning',
-    section: 'main'
-  },
-  { 
-    id: 'activity-log', 
-    label: 'Activity log', 
-    icon: HistoryOutlined, 
-    path: '/activity',
-    section: 'main'
-  },
-  { 
-    id: 'admin', 
-    label: 'Admin', 
+    id: 'settings', 
+    label: 'Settings', 
     icon: SettingsOutlined, 
     path: '/settings',
     section: 'main'

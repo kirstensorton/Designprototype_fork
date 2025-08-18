@@ -37,15 +37,14 @@ const availableSquads = [
 
 // Page titles mapping
 const pageTitles = {
+  '/': 'Home',
   '/dashboard': 'Dashboard',
-  '/medical': 'Medical',
-  '/analysis': 'Analysis',
+  '/schedule': 'Schedule',
+  '/favorites': 'Favorites',
+  '/messaging': 'Messaging',
   '/athlete': 'Athletes',
-  '/workloads': 'Workload',
   '/questionnaires': 'Forms',
-  '/planning': 'Calendar',
-  '/activity': 'Activity log',
-  '/settings': 'Admin',
+  '/settings': 'Settings',
   '/help': 'Help'
 }
 
