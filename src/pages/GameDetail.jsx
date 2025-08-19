@@ -731,7 +731,7 @@ function GameDetail() {
                   <ListItem key={note.id} alignItems="flex-start" sx={{ px: 0 }}>
                     <ListItemText
                       primary={
-                        <Box sx={{ textAlign: 'right' }}>
+                        <Box sx={{ textAlign: 'left' }}>
                           <Typography variant="caption" color="text.secondary">
                             {formatDate(note.timestamp)}
                           </Typography>

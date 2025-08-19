@@ -51,20 +51,6 @@ const navigationItems = [
     section: 'main'
   },
   { 
-    id: 'messaging', 
-    label: 'Messaging', 
-    icon: MessageOutlined, 
-    path: '/messaging',
-    section: 'main'
-  },
-  { 
-    id: 'athletes', 
-    label: 'Athletes', 
-    icon: PeopleOutlined, 
-    path: '/athlete',
-    section: 'main'
-  },
-  { 
     id: 'settings', 
     label: 'Settings', 
     icon: SettingsOutlined, 

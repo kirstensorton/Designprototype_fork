@@ -34,6 +34,10 @@ import {
   Delete as DeleteIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
+  MessageOutlined,
+  CheckCircle,
+  Email,
+  Note,
 } from '@mui/icons-material';
 import {
   Dialog,
@@ -110,9 +114,16 @@ function AthleteDetail() {
     },
   ]);
 
+  // Message tracking state
+  const [sentMessages, setSentMessages] = useState(() => {
+    // Clear any existing messages for testing
+    localStorage.removeItem(`athleteMessages_${athlete.id}`);
+    return [];
+  });
+
   const handleToggleFavorite = () => {
     if (isFavorited) {
-      // If currently favorited, remove from favorites
+      // If currently favorited, remove from favorites and move to past
       setIsFavorited(false);
       setAthleteCategory('');
       
@@ -120,6 +131,35 @@ function AthleteDetail() {
       const athleteCategories = JSON.parse(localStorage.getItem('athleteCategories') || '{}');
       delete athleteCategories[athlete.id];
       localStorage.setItem('athleteCategories', JSON.stringify(athleteCategories));
+      
+      // Move athlete to past favorites in localStorage
+      const currentFavorites = JSON.parse(localStorage.getItem('currentFavorites') || '[]');
+      const pastFavorites = JSON.parse(localStorage.getItem('pastFavorites') || '[]');
+      
+      // Find the athlete in current favorites
+      const athleteToMove = currentFavorites.find(fav => fav.id === athlete.id);
+      
+      if (athleteToMove) {
+        // Add date unfavorited
+        const athleteWithUnfavoriteDate = {
+          ...athleteToMove,
+          dateUnfavorited: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })
+        };
+        
+        // Remove from current favorites
+        const updatedCurrentFavorites = currentFavorites.filter(fav => fav.id !== athlete.id);
+        
+        // Add to past favorites
+        const updatedPastFavorites = [athleteWithUnfavoriteDate, ...pastFavorites];
+        
+        // Save to localStorage
+        localStorage.setItem('currentFavorites', JSON.stringify(updatedCurrentFavorites));
+        localStorage.setItem('pastFavorites', JSON.stringify(updatedPastFavorites));
+      }
     } else {
       // If not favorited, open the modal to select category
       setFavoriteModalOpen(true);
@@ -136,6 +176,46 @@ function AthleteDetail() {
       athleteCategories[athlete.id] = selectedCategory;
       localStorage.setItem('athleteCategories', JSON.stringify(athleteCategories));
       
+      // Add athlete to current favorites in localStorage
+      const currentFavorites = JSON.parse(localStorage.getItem('currentFavorites') || '[]');
+      const pastFavorites = JSON.parse(localStorage.getItem('pastFavorites') || '[]');
+      
+      // Check if athlete is in past favorites
+      const athleteInPast = pastFavorites.find(fav => fav.id === athlete.id);
+      
+      if (athleteInPast) {
+        // Remove from past favorites
+        const updatedPastFavorites = pastFavorites.filter(fav => fav.id !== athlete.id);
+        localStorage.setItem('pastFavorites', JSON.stringify(updatedPastFavorites));
+      }
+      
+      // Add to current favorites if not already there
+      const athleteExists = currentFavorites.find(fav => fav.id === athlete.id);
+      if (!athleteExists) {
+        const athleteToAdd = {
+          id: athlete.id,
+          name: athlete.name,
+          position: athlete.position,
+          age: athlete.age,
+          club: athlete.team,
+          squad: athlete.squad,
+          graduationYear: athlete.graduationYear,
+          dateAdded: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          tag: selectedCategory,
+          tagColor: selectedCategory === 'Must Sign' ? 'error' : 
+                   selectedCategory === 'High Potential' ? 'success' : 
+                   selectedCategory === 'Monitor' ? 'warning' : 'default',
+          avatarColor: 'primary.main'
+        };
+        
+        const updatedCurrentFavorites = [athleteToAdd, ...currentFavorites];
+        localStorage.setItem('currentFavorites', JSON.stringify(updatedCurrentFavorites));
+      }
+      
       setFavoriteModalOpen(false);
       setSelectedCategory('');
     }
@@ -144,6 +224,22 @@ function AthleteDetail() {
   const handleCancelFavorite = () => {
     setFavoriteModalOpen(false);
     setSelectedCategory('');
+  };
+
+  const handleSendMessage = () => {
+    const messageNumber = sentMessages.length + 1;
+    const newMessage = {
+      id: Date.now(),
+      messageNumber: messageNumber,
+      timestamp: new Date().toISOString(),
+      messageType: messageNumber === 1 ? 'First message sent' : 'Second message sent'
+    };
+    
+    const updatedMessages = [...sentMessages, newMessage];
+    setSentMessages(updatedMessages);
+    
+    // Save to localStorage
+    localStorage.setItem(`athleteMessages_${athlete.id}`, JSON.stringify(updatedMessages));
   };
 
   const handleAddNote = () => {
@@ -245,6 +341,18 @@ function AthleteDetail() {
                     sx={{ mb: 2 }}
                   />
                 )}
+                
+                <Box sx={{ mb: 2 }}>
+                  <Button 
+                    variant="outlined" 
+                    color={isFavorited ? "error" : "primary"}
+                    fullWidth
+                    onClick={handleToggleFavorite}
+                    startIcon={isFavorited ? <Favorite /> : <FavoriteBorder />}
+                  >
+                    {isFavorited ? "Remove from Favorites" : "Add to Favorites"}
+                  </Button>
+                </Box>
               </Box>
 
               <Divider sx={{ my: 2 }} />
@@ -274,18 +382,6 @@ function AthleteDetail() {
                   <Typography variant="body2" color="text.secondary">Date Added:</Typography>
                   <Typography variant="body2" fontWeight="medium">{athlete.dateAdded}</Typography>
                 </Box>
-              </Box>
-
-              <Box sx={{ mt: 3 }}>
-                <Button 
-                  variant="outlined" 
-                  color={isFavorited ? "error" : "primary"}
-                  fullWidth
-                  onClick={handleToggleFavorite}
-                  startIcon={isFavorited ? <Favorite /> : <FavoriteBorder />}
-                >
-                  {isFavorited ? "Remove from Favorites" : "Add to Favorites"}
-                </Button>
               </Box>
             </CardContent>
           </Card>
@@ -419,60 +515,109 @@ function AthleteDetail() {
                 </CardContent>
               </Card>
             </Grid>
-          </Grid>
-        </Grid>
 
-        {/* Notes Section */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Scout Notes
-              </Typography>
-              
-              {/* Add Note */}
-              <Box sx={{ mb: 3 }}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  placeholder="Write your notes about this player..."
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  sx={{ mb: 1 }}
-                />
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddNote}
-                  disabled={!newNote.trim()}
-                >
-                  Add Note
-                </Button>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              {/* Notes List */}
-              <List>
-                {notes.map((note) => (
-                  <ListItem key={note.id} alignItems="flex-start" sx={{ px: 0 }}>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ textAlign: 'left' }}>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDate(note.timestamp)}
+            {/* Send Message to Athlete */}
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6">
+                      Send athlete a message
+                    </Typography>
+                    <Chip 
+                      label="Athlete opted for messages" 
+                      color="default"
+                      size="small"
+                      icon={<CheckCircle />}
+                      sx={{ bgcolor: '#fff3cd', color: '#856404' }}
+                    />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Messaging this athlete will sharing your contact information with them over email so they can reach back out to you if they are interested. You are limited to messaging athlete only twice.
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button 
+                      variant="contained" 
+                      color="primary"
+                      startIcon={<Email />}
+                      onClick={handleSendMessage}
+                      disabled={sentMessages.length >= 2}
+                    >
+                      Send Message
+                    </Button>
+                  </Box>
+                  
+                  {/* Sent Messages List */}
+                  {sentMessages.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                        Messages sent:
+                      </Typography>
+                      {sentMessages.map((message) => (
+                        <Box key={message.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Email sx={{ fontSize: '1rem', color: 'text.secondary' }} />
+                          <Typography variant="body2" color="text.secondary">
+                            {message.messageType} - {formatDate(message.timestamp)}
                           </Typography>
                         </Box>
-                      }
-                      secondary={
-                        editingNoteId === note.id ? (
-                          <Box sx={{ mt: 1 }}>
-                            <TextField
-                              fullWidth
-                              multiline
-                              rows={3}
-                              value={editingNoteContent}
+                      ))}
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Notes Section */}
+            <Grid item xs={12}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Scout Notes
+                  </Typography>
+                  
+                  {/* Add Note */}
+                  <Box sx={{ mb: 3 }}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      placeholder="Write your notes about this player..."
+                      value={newNote}
+                      onChange={(e) => setNewNote(e.target.value)}
+                      sx={{ mb: 1 }}
+                    />
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={handleAddNote}
+                      disabled={!newNote.trim()}
+                    >
+                      Add Note
+                    </Button>
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  {/* Notes List */}
+                  <List>
+                    {notes.map((note) => (
+                      <ListItem key={note.id} alignItems="flex-start" sx={{ px: 0 }}>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ textAlign: 'left' }}>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatDate(note.timestamp)}
+                              </Typography>
+                            </Box>
+                          }
+                          secondary={
+                            editingNoteId === note.id ? (
+                              <Box sx={{ mt: 1 }}>
+                                <TextField
+                                  fullWidth
+                                  multiline
+                                  rows={3}
+                                  value={editingNoteContent}
                               onChange={(e) => setEditingNoteContent(e.target.value)}
                               sx={{ mb: 1 }}
                             />
@@ -533,6 +678,8 @@ function AthleteDetail() {
               </List>
             </CardContent>
           </Card>
+        </Grid>
+          </Grid>
         </Grid>
       </Grid>
 

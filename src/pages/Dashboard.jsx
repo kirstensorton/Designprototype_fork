@@ -56,10 +56,10 @@ function Dashboard() {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" component="h2" gutterBottom>
-                Reports Due
+                Pending game requests
               </Typography>
               <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', color: 'warning.main' }}>
-                5
+                2
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 This week
@@ -75,7 +75,7 @@ function Dashboard() {
                 Favorites
               </Typography>
               <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                28
+                9
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Saved athletes

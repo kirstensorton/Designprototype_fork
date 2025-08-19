@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { 
   Box, 
   Typography, 
@@ -38,6 +38,7 @@ import {
 
 function Favorites() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [tabValue, setTabValue] = React.useState(0);
   
   // Get saved categories from localStorage
@@ -46,140 +47,187 @@ function Favorites() {
   };
   
   // State for managing current and past favorites
-  const [currentFavorites, setCurrentFavorites] = React.useState([
-    {
-      id: '1',
-      name: 'John Smith',
-      position: 'Forward',
-      age: 18,
-      club: 'LA Galaxy',
-      squad: 'U18',
-      graduationYear: '2025',
-      dateAdded: 'March 15, 2024',
-      tag: 'Must Sign',
-      tagColor: 'error',
-      avatarColor: 'primary.main'
-    },
-    {
-      id: '2',
-      name: 'Sarah Johnson',
-      position: 'Midfielder',
-      age: 17,
-      club: 'NYCFC',
-      squad: 'U17',
-      graduationYear: '2026',
-      dateAdded: 'March 12, 2024',
-      tag: 'Monitor',
-      tagColor: 'warning',
-      avatarColor: 'secondary.main'
-    },
-    {
-      id: '3',
-      name: 'Mike Davis',
-      position: 'Defender',
-      age: 19,
-      club: 'Atlanta United',
-      squad: 'U19',
-      graduationYear: '2024',
-      dateAdded: 'March 10, 2024',
-      tag: 'High Potential',
-      tagColor: 'success',
-      avatarColor: 'warning.main'
-    },
-    {
-      id: '4',
-      name: 'Alex Rodriguez',
-      position: 'Midfielder',
-      age: 16,
-      club: 'NY Red Bulls',
-      squad: 'U16',
-      graduationYear: '2027',
-      dateAdded: 'March 8, 2024',
-      tag: 'Monitor',
-      tagColor: 'warning',
-      avatarColor: 'info.main'
-    },
-    {
-      id: '5',
-      name: 'Emma Wilson',
-      position: 'Forward',
-      age: 17,
-      club: 'Portland Timbers',
-      squad: 'U17',
-      graduationYear: '2026',
-      dateAdded: 'March 7, 2024',
-      tag: 'Must Sign',
-      tagColor: 'error',
-      avatarColor: 'success.main'
-    },
-    {
-      id: '6',
-      name: 'Carlos Martinez',
-      position: 'Defender',
-      age: 18,
-      club: 'FC Dallas',
-      squad: 'U18',
-      graduationYear: '2025',
-      dateAdded: 'March 6, 2024',
-      tag: 'High Potential',
-      tagColor: 'success',
-      avatarColor: 'secondary.main'
-    },
-    {
-      id: '7',
-      name: 'Jordan Thompson',
-      position: 'Goalkeeper',
-      age: 19,
-      club: 'Seattle Sounders',
-      squad: 'U19',
-      graduationYear: '2024',
-      dateAdded: 'March 5, 2024',
-      tag: 'Monitor',
-      tagColor: 'warning',
-      avatarColor: 'error.main'
-    },
-    {
-      id: '8',
-      name: 'Sophia Chen',
-      position: 'Midfielder',
-      age: 16,
-      club: 'Vancouver Whitecaps',
-      squad: 'U16',
-      graduationYear: '2027',
-      dateAdded: 'March 4, 2024',
-      tag: 'High Potential',
-      tagColor: 'success',
-      avatarColor: 'warning.main'
-    },
-    {
-      id: '9',
-      name: 'Marcus Johnson',
-      position: 'Forward',
-      age: 17,
-      club: 'Orlando City',
-      squad: 'U17',
-      graduationYear: '2026',
-      dateAdded: 'March 3, 2024',
-      tag: 'Must Sign',
-      tagColor: 'error',
-      avatarColor: 'info.main'
-    },
-    {
-      id: '10',
-      name: 'Isabella Garcia',
-      position: 'Defender',
-      age: 18,
-      club: 'Houston Dynamo',
-      squad: 'U18',
-      graduationYear: '2025',
-      dateAdded: 'March 2, 2024',
-      tag: 'Monitor',
-      tagColor: 'warning',
-      avatarColor: 'success.main'
-    }
-  ]);
-
+  const [currentFavorites, setCurrentFavorites] = React.useState([]);
   const [pastFavorites, setPastFavorites] = React.useState([]);
+
+  // Initialize and load data from localStorage
+  React.useEffect(() => {
+    console.log('Favorites page useEffect running');
+    const savedCurrent = localStorage.getItem('currentFavorites');
+    const savedPast = localStorage.getItem('pastFavorites');
+    
+    console.log('Saved current favorites:', savedCurrent);
+    console.log('Saved past favorites:', savedPast);
+    
+    if (savedCurrent) {
+      setCurrentFavorites(JSON.parse(savedCurrent));
+    } else {
+      // Initialize with default data if no saved data exists
+      const defaultCurrentFavorites = [
+        {
+          id: '1',
+          name: 'John Smith',
+          position: 'Forward',
+          age: 18,
+          club: 'LA Galaxy',
+          squad: 'U18',
+          graduationYear: '2025',
+          dateAdded: 'March 15, 2024',
+          tag: 'Must Sign',
+          tagColor: 'error',
+          avatarColor: 'primary.main'
+        },
+        {
+          id: '2',
+          name: 'Sarah Johnson',
+          position: 'Midfielder',
+          age: 17,
+          club: 'NYCFC',
+          squad: 'U17',
+          graduationYear: '2026',
+          dateAdded: 'March 12, 2024',
+          tag: 'Monitor',
+          tagColor: 'warning',
+          avatarColor: 'secondary.main'
+        },
+        {
+          id: '3',
+          name: 'Mike Davis',
+          position: 'Defender',
+          age: 19,
+          club: 'Atlanta United',
+          squad: 'U19',
+          graduationYear: '2024',
+          dateAdded: 'March 10, 2024',
+          tag: 'High Potential',
+          tagColor: 'success',
+          avatarColor: 'warning.main'
+        },
+        {
+          id: '4',
+          name: 'Alex Rodriguez',
+          position: 'Midfielder',
+          age: 16,
+          club: 'NY Red Bulls',
+          squad: 'U16',
+          graduationYear: '2027',
+          dateAdded: 'March 8, 2024',
+          tag: 'Monitor',
+          tagColor: 'warning',
+          avatarColor: 'info.main'
+        },
+        {
+          id: '5',
+          name: 'Emma Wilson',
+          position: 'Forward',
+          age: 17,
+          club: 'Portland Timbers',
+          squad: 'U17',
+          graduationYear: '2026',
+          dateAdded: 'March 7, 2024',
+          tag: 'Must Sign',
+          tagColor: 'error',
+          avatarColor: 'success.main'
+        },
+        {
+          id: '6',
+          name: 'Carlos Martinez',
+          position: 'Defender',
+          age: 18,
+          club: 'FC Dallas',
+          squad: 'U18',
+          graduationYear: '2025',
+          dateAdded: 'March 6, 2024',
+          tag: 'High Potential',
+          tagColor: 'success',
+          avatarColor: 'secondary.main'
+        },
+        {
+          id: '7',
+          name: 'Jordan Thompson',
+          position: 'Goalkeeper',
+          age: 19,
+          club: 'Seattle Sounders',
+          squad: 'U19',
+          graduationYear: '2024',
+          dateAdded: 'March 5, 2024',
+          tag: 'Monitor',
+          tagColor: 'warning',
+          avatarColor: 'error.main'
+        },
+        {
+          id: '8',
+          name: 'Sophia Chen',
+          position: 'Midfielder',
+          age: 16,
+          club: 'Vancouver Whitecaps',
+          squad: 'U16',
+          graduationYear: '2027',
+          dateAdded: 'March 4, 2024',
+          tag: 'High Potential',
+          tagColor: 'success',
+          avatarColor: 'warning.main'
+        },
+        {
+          id: '9',
+          name: 'Marcus Johnson',
+          position: 'Forward',
+          age: 17,
+          club: 'Orlando City',
+          squad: 'U17',
+          graduationYear: '2026',
+          dateAdded: 'March 3, 2024',
+          tag: 'Must Sign',
+          tagColor: 'error',
+          avatarColor: 'info.main'
+        },
+        {
+          id: '10',
+          name: 'Isabella Garcia',
+          position: 'Defender',
+          age: 18,
+          club: 'Houston Dynamo',
+          squad: 'U18',
+          graduationYear: '2025',
+          dateAdded: 'March 2, 2024',
+          tag: 'Monitor',
+          tagColor: 'warning',
+          avatarColor: 'success.main'
+        }
+      ];
+      
+      console.log('Setting default current favorites:', defaultCurrentFavorites);
+      
+      // Set the default data
+      localStorage.setItem('currentFavorites', JSON.stringify(defaultCurrentFavorites));
+      setCurrentFavorites(defaultCurrentFavorites);
+    }
+    
+    // Handle past favorites
+    if (savedPast) {
+      setPastFavorites(JSON.parse(savedPast));
+    } else {
+      localStorage.setItem('pastFavorites', JSON.stringify([]));
+      setPastFavorites([]);
+    }
+    }, []); // Only run once on mount
+
+  // Refresh data when navigating back to this page
+  React.useEffect(() => {
+    console.log('Refresh useEffect running, pathname:', location.pathname);
+    const savedCurrent = localStorage.getItem('currentFavorites');
+    const savedPast = localStorage.getItem('pastFavorites');
+    
+    console.log('Refresh - saved current:', savedCurrent);
+    console.log('Refresh - saved past:', savedPast);
+    
+    if (savedCurrent) {
+      setCurrentFavorites(JSON.parse(savedCurrent));
+    }
+    if (savedPast) {
+      setPastFavorites(JSON.parse(savedPast));
+    }
+  }, [location.pathname]);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -211,10 +259,16 @@ function Favorites() {
       };
       
       // Remove from current favorites
-      setCurrentFavorites(prev => prev.filter(athlete => athlete.id !== athleteId));
+      const updatedCurrentFavorites = currentFavorites.filter(athlete => athlete.id !== athleteId);
+      setCurrentFavorites(updatedCurrentFavorites);
       
       // Add to past favorites
-      setPastFavorites(prev => [athleteWithUnfavoriteDate, ...prev]);
+      const updatedPastFavorites = [athleteWithUnfavoriteDate, ...pastFavorites];
+      setPastFavorites(updatedPastFavorites);
+      
+      // Save to localStorage
+      localStorage.setItem('currentFavorites', JSON.stringify(updatedCurrentFavorites));
+      localStorage.setItem('pastFavorites', JSON.stringify(updatedPastFavorites));
       
       // Remove the category from localStorage
       const athleteCategories = JSON.parse(localStorage.getItem('athleteCategories') || '{}');

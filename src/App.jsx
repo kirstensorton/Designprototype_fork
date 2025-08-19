@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import LayoutWithMainNav from './components/LayoutWithMainNav'
 import SimplePage from './pages/SimplePage'
 import Athletes from './pages/Athletes'
@@ -14,7 +14,7 @@ function App() {
   return (
     <LayoutWithMainNav>
       <Routes>
-        <Route path="/" element={<SimplePage pageName="Home" />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/schedule" element={<Schedule />} />
         <Route path="/favorites" element={<Favorites />} />
