@@ -65,13 +65,6 @@ const navigationItems = [
     section: 'main'
   },
   { 
-    id: 'forms', 
-    label: 'Forms', 
-    icon: AssignmentOutlined, 
-    path: '/questionnaires',
-    section: 'main'
-  },
-  { 
     id: 'settings', 
     label: 'Settings', 
     icon: SettingsOutlined, 

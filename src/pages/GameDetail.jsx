@@ -30,6 +30,7 @@ import {
   ListItemAvatar,
   Divider,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -51,6 +52,14 @@ import {
   Delete as DeleteIcon,
   Save as SaveIcon,
 } from '@mui/icons-material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  RadioGroup,
+  Radio,
+} from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 
 function GameDetail() {
@@ -62,26 +71,128 @@ function GameDetail() {
   const [selectedEvent, setSelectedEvent] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState('');
   const [favoritePlayers, setFavoritePlayers] = useState(new Set());
+  const [playerCategories, setPlayerCategories] = useState({});
   const [newNote, setNewNote] = useState('');
   const [gameNotes, setGameNotes] = useState([]);
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [editingNoteContent, setEditingNoteContent] = useState('');
+  const [favoriteModalOpen, setFavoriteModalOpen] = useState(false);
+  const [selectedPlayerForFavorite, setSelectedPlayerForFavorite] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
+  const [selectedPlayerForNotes, setSelectedPlayerForNotes] = useState(null);
+  const [playerNote, setPlayerNote] = useState('');
+  const [playerNotes, setPlayerNotes] = useState({});
 
-  const handleToggleFavorite = (playerId) => {
+  const handleFavoriteClick = (player) => {
+    console.log('Opening favorite modal for player:', player.name);
+    setSelectedPlayerForFavorite(player);
+    setSelectedCategory(playerCategories[player.id] || '');
+    setFavoriteModalOpen(true);
+  };
+
+  const handleAddToFavorites = () => {
+    if (selectedPlayerForFavorite && selectedCategory) {
+      setFavoritePlayers(prev => {
+        const newFavorites = new Set(prev);
+        newFavorites.add(selectedPlayerForFavorite.id);
+        return newFavorites;
+      });
+      setPlayerCategories(prev => ({
+        ...prev,
+        [selectedPlayerForFavorite.id]: selectedCategory
+      }));
+      setFavoriteModalOpen(false);
+      setSelectedPlayerForFavorite(null);
+      setSelectedCategory('');
+    }
+  };
+
+  const handleUnfavorite = (player) => {
     setFavoritePlayers(prev => {
       const newFavorites = new Set(prev);
-      if (newFavorites.has(playerId)) {
-        newFavorites.delete(playerId);
-      } else {
-        newFavorites.add(playerId);
-      }
+      newFavorites.delete(player.id);
       return newFavorites;
+    });
+    setPlayerCategories(prev => {
+      const newCategories = { ...prev };
+      delete newCategories[player.id];
+      return newCategories;
     });
   };
 
+  const handleCancelFavorite = () => {
+    setFavoriteModalOpen(false);
+    setSelectedPlayerForFavorite(null);
+    setSelectedCategory('');
+  };
+
   const handleNoteClick = (player) => {
-    // Placeholder for note action; wire to dialog or route as needed
-    console.log('Open notes for player:', player.name);
+    setSelectedPlayerForNotes(player);
+    // Load existing notes for this player into the input field
+    const existingNotes = playerNotes[player.id] || [];
+    const notesText = existingNotes.map(note => note.content).join('\n\n');
+    setPlayerNote(notesText);
+    setNotesModalOpen(true);
+  };
+
+  const handleAddPlayerNote = () => {
+    if (playerNote.trim() && selectedPlayerForNotes) {
+      const newNote = {
+        id: Date.now(),
+        content: playerNote.trim(),
+        timestamp: new Date()
+      };
+      
+      setPlayerNotes(prev => ({
+        ...prev,
+        [selectedPlayerForNotes.id]: [
+          ...(prev[selectedPlayerForNotes.id] || []),
+          newNote
+        ]
+      }));
+      
+      setPlayerNote('');
+      setNotesModalOpen(false);
+      setSelectedPlayerForNotes(null);
+    }
+  };
+
+
+
+  const handleSaveNotes = () => {
+    if (selectedPlayerForNotes) {
+      if (playerNote.trim()) {
+        // Save the current note if there's text in the input
+        const newNote = {
+          id: Date.now(),
+          content: playerNote.trim(),
+          timestamp: new Date()
+        };
+        
+        setPlayerNotes(prev => ({
+          ...prev,
+          [selectedPlayerForNotes.id]: [newNote]
+        }));
+      } else {
+        // Remove the player's notes if the input is empty
+        setPlayerNotes(prev => {
+          const newNotes = { ...prev };
+          delete newNotes[selectedPlayerForNotes.id];
+          return newNotes;
+        });
+      }
+    }
+    
+    setNotesModalOpen(false);
+    setSelectedPlayerForNotes(null);
+    setPlayerNote('');
+  };
+
+  const handleCancelNotes = () => {
+    setNotesModalOpen(false);
+    setSelectedPlayerForNotes(null);
+    setPlayerNote('');
   };
 
   const handleAddGameNote = () => {
@@ -264,6 +375,15 @@ function GameDetail() {
     return 'default';
   };
 
+  const getTagColor = (tag) => {
+    switch (tag) {
+      case 'Must Sign': return 'error';
+      case 'High Potential': return 'success';
+      case 'Monitor': return 'warning';
+      default: return 'default';
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header with back button */}
@@ -276,47 +396,42 @@ function GameDetail() {
         </Typography>
       </Box>
 
-      {/* Score Display with Game Type Toggle */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        {/* Game Type Selection */}
-        <Box>
-          <ToggleButtonGroup
-            value={gameType}
-            exclusive
-            onChange={(e, newValue) => newValue && setGameType(newValue)}
-            size="small"
-          >
-            <ToggleButton value="regular">Regular / Extra Time</ToggleButton>
-            <ToggleButton value="penalty">Penalty Shoot-out</ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-
-        {/* Score Display - Centered */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 2
-        }}>
-          <Avatar sx={{ bgcolor: 'primary.main' }}>
-            {game.homeTeam.split(' ').map(word => word[0]).join('').slice(0, 2)}
-          </Avatar>
-          <Typography variant="h4" fontWeight="bold">
-            {game.homeScore} - {game.awayScore}
-          </Typography>
-          <Avatar sx={{ bgcolor: 'secondary.main' }}>
-            {game.awayTeam.split(' ').map(word => word[0]).join('').slice(0, 2)}
-          </Avatar>
-        </Box>
-
-        {/* Empty box to maintain spacing */}
-        <Box sx={{ width: 200 }}></Box>
-      </Box>
-
-      {/* Game Information */}
+      {/* Score Display with Game Type Toggle and Game Information */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            {/* Game Type Selection */}
             <Box>
+              <ToggleButtonGroup
+                value={gameType}
+                exclusive
+                onChange={(e, newValue) => newValue && setGameType(newValue)}
+                size="small"
+              >
+                <ToggleButton value="regular">Regular / Extra Time</ToggleButton>
+                <ToggleButton value="penalty">Penalty Shoot-out</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+
+            {/* Score Display - Centered */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2
+            }}>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                {game.homeTeam.split(' ').map(word => word[0]).join('').slice(0, 2)}
+              </Avatar>
+              <Typography variant="h4" fontWeight="bold">
+                {game.homeScore} - {game.awayScore}
+              </Typography>
+              <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                {game.awayTeam.split(' ').map(word => word[0]).join('').slice(0, 2)}
+              </Avatar>
+            </Box>
+
+            {/* Game Information - Right side */}
+            <Box sx={{ textAlign: 'right' }}>
               <Typography variant="h6" gutterBottom>
                 {game.location}
               </Typography>
@@ -396,24 +511,53 @@ function GameDetail() {
                           />
                         </TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleToggleFavorite(player.id)}
-                              sx={{ color: favoritePlayers.has(player.id) ? 'error.main' : 'action.disabled' }}
+                          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                            <Tooltip 
+                              title={favoritePlayers.has(player.id) && playerCategories[player.id] ? playerCategories[player.id] : ''}
+                              placement="bottom"
+                              disableHoverListener={!favoritePlayers.has(player.id) || !playerCategories[player.id]}
+                              arrow
+                              sx={{ 
+                                '& .MuiTooltip-tooltip': {
+                                  fontSize: '12px',
+                                  padding: '4px 8px'
+                                }
+                              }}
                             >
-                              {favoritePlayers.has(player.id) ? <Favorite /> : <FavoriteBorder />}
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleNoteClick(player)}
-                              sx={{ color: 'action.active' }}
-                              aria-label={`Add note for ${player.name}`}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
-                                note_add
-                              </span>
-                            </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={() => favoritePlayers.has(player.id) ? handleUnfavorite(player) : handleFavoriteClick(player)}
+                                sx={{ color: favoritePlayers.has(player.id) ? 'primary.main' : 'action.disabled' }}
+                              >
+                                {favoritePlayers.has(player.id) ? <Favorite /> : <FavoriteBorder />}
+                              </IconButton>
+                            </Tooltip>
+                            <Box sx={{ position: 'relative' }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleNoteClick(player)}
+                                sx={{ color: 'action.active' }}
+                                aria-label={`Add note for ${player.name}`}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                                  note_add
+                                </span>
+                              </IconButton>
+                              {playerNotes[player.id] && playerNotes[player.id].length > 0 && (
+                                <Box
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 4,
+                                    right: 4,
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: '50%',
+                                    backgroundColor: 'primary.main',
+                                    border: '1px solid white'
+                                  }}
+                                />
+                              )}
+                            </Box>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -663,6 +807,121 @@ function GameDetail() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Favorite Modal */}
+      <Dialog
+        open={favoriteModalOpen}
+        onClose={handleCancelFavorite}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Add "{selectedPlayerForFavorite?.name}" to favorites
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Choose a category to apply to the athlete.
+          </Typography>
+          
+          <RadioGroup
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            sx={{ '& .MuiFormControlLabel-root': { mb: 1 } }}
+          >
+            <FormControlLabel
+              value="Must Sign"
+              control={<Radio />}
+              label={
+                <Box>
+                  <Typography variant="body1" fontWeight="medium">
+                    Must Sign
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    High priority athlete that should be signed immediately
+                  </Typography>
+                </Box>
+              }
+            />
+            <FormControlLabel
+              value="High Potential"
+              control={<Radio />}
+              label={
+                <Box>
+                  <Typography variant="body1" fontWeight="medium">
+                    High Potential
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Athlete with excellent potential for future development
+                  </Typography>
+                </Box>
+              }
+            />
+            <FormControlLabel
+              value="Monitor"
+              control={<Radio />}
+              label={
+                <Box>
+                  <Typography variant="body1" fontWeight="medium">
+                    Monitor
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Athlete to keep an eye on for potential opportunities
+                  </Typography>
+                </Box>
+              }
+            />
+          </RadioGroup>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelFavorite}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleAddToFavorites}
+            variant="contained"
+            disabled={!selectedCategory}
+          >
+            Add to favorites
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Notes Modal */}
+      <Dialog
+        open={notesModalOpen}
+        onClose={handleCancelNotes}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Add notes
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1 }}>
+            <TextField
+              fullWidth
+              multiline
+              rows={8}
+              placeholder="Enter your notes here..."
+              value={playerNote}
+              onChange={(e) => setPlayerNote(e.target.value)}
+              variant="outlined"
+              sx={{ mb: 2 }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelNotes}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSaveNotes}
+            variant="contained"
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

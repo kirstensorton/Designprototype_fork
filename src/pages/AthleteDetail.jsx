@@ -35,28 +35,23 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+} from '@mui/material';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 function AthleteDetail() {
   const navigate = useNavigate();
   const { athleteId } = useParams();
-  const [isFavorited, setIsFavorited] = useState(true);
-  const [newNote, setNewNote] = useState('');
-  const [editingNoteId, setEditingNoteId] = useState(null);
-  const [editingNoteContent, setEditingNoteContent] = useState('');
-  const [notes, setNotes] = useState([
-    {
-      id: 1,
-      content: "Excellent technical skills, particularly in ball control and passing accuracy. Shows great vision on the field and makes intelligent runs. Needs to improve defensive positioning.",
-      timestamp: "2024-03-15T10:30:00",
-    },
-    {
-      id: 2,
-      content: "Strong physical presence for his age. Good aerial ability and tackling. Could work on speed and agility to become more versatile.",
-      timestamp: "2024-03-12T14:15:00",
-    },
-  ]);
-
+  const location = useLocation();
+  const { isCurrentFavorite = true, fromFavorites = false } = location.state || {};
+  
   // Mock athlete data - in real app this would come from API
   const athlete = {
     id: athleteId || '1',
@@ -87,9 +82,68 @@ function AthleteDetail() {
       tackles: { value: 12, percentile: 45 },
     }
   };
+  
+  const [isFavorited, setIsFavorited] = useState(isCurrentFavorite);
+  const [favoriteModalOpen, setFavoriteModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [athleteCategory, setAthleteCategory] = useState(() => {
+    if (isCurrentFavorite) {
+      // Check if there's a saved category in localStorage
+      const athleteCategories = JSON.parse(localStorage.getItem('athleteCategories') || '{}');
+      return athleteCategories[athlete.id] || athlete.tag || '';
+    }
+    return '';
+  });
+  const [newNote, setNewNote] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [editingNoteContent, setEditingNoteContent] = useState('');
+  const [notes, setNotes] = useState([
+    {
+      id: 1,
+      content: "Excellent technical skills, particularly in ball control and passing accuracy. Shows great vision on the field and makes intelligent runs. Needs to improve defensive positioning.",
+      timestamp: "2024-03-15T10:30:00",
+    },
+    {
+      id: 2,
+      content: "Strong physical presence for his age. Good aerial ability and tackling. Could work on speed and agility to become more versatile.",
+      timestamp: "2024-03-12T14:15:00",
+    },
+  ]);
 
   const handleToggleFavorite = () => {
-    setIsFavorited(!isFavorited);
+    if (isFavorited) {
+      // If currently favorited, remove from favorites
+      setIsFavorited(false);
+      setAthleteCategory('');
+      
+      // Remove the category from localStorage
+      const athleteCategories = JSON.parse(localStorage.getItem('athleteCategories') || '{}');
+      delete athleteCategories[athlete.id];
+      localStorage.setItem('athleteCategories', JSON.stringify(athleteCategories));
+    } else {
+      // If not favorited, open the modal to select category
+      setFavoriteModalOpen(true);
+    }
+  };
+
+  const handleAddToFavorites = () => {
+    if (selectedCategory) {
+      setIsFavorited(true);
+      setAthleteCategory(selectedCategory);
+      
+      // Save the selected category to localStorage for the favorites page
+      const athleteCategories = JSON.parse(localStorage.getItem('athleteCategories') || '{}');
+      athleteCategories[athlete.id] = selectedCategory;
+      localStorage.setItem('athleteCategories', JSON.stringify(athleteCategories));
+      
+      setFavoriteModalOpen(false);
+      setSelectedCategory('');
+    }
+  };
+
+  const handleCancelFavorite = () => {
+    setFavoriteModalOpen(false);
+    setSelectedCategory('');
   };
 
   const handleAddNote = () => {
@@ -184,11 +238,13 @@ function AthleteDetail() {
                 <Typography variant="h5" gutterBottom>
                   {athlete.name}
                 </Typography>
-                <Chip 
-                  label={athlete.tag} 
-                  color={getTagColor(athlete.tag)}
-                  sx={{ mb: 2 }}
-                />
+                {isFavorited && athleteCategory && (
+                  <Chip 
+                    label={athleteCategory} 
+                    color={getTagColor(athleteCategory)}
+                    sx={{ mb: 2 }}
+                  />
+                )}
               </Box>
 
               <Divider sx={{ my: 2 }} />
@@ -401,14 +457,9 @@ function AthleteDetail() {
               <List>
                 {notes.map((note) => (
                   <ListItem key={note.id} alignItems="flex-start" sx={{ px: 0 }}>
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: 'primary.main' }}>
-                        <PersonOutlined />
-                      </Avatar>
-                    </ListItemAvatar>
                     <ListItemText
                       primary={
-                        <Box sx={{ textAlign: 'right' }}>
+                        <Box sx={{ textAlign: 'left' }}>
                           <Typography variant="caption" color="text.secondary">
                             {formatDate(note.timestamp)}
                           </Typography>
@@ -484,6 +535,84 @@ function AthleteDetail() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Favorite Modal */}
+      <Dialog
+        open={favoriteModalOpen}
+        onClose={handleCancelFavorite}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Add "{athlete.name}" to favorites
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Choose a category to apply to the athlete.
+          </Typography>
+          
+          <RadioGroup
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            sx={{ '& .MuiFormControlLabel-root': { mb: 1 } }}
+          >
+            <FormControlLabel
+              value="Must Sign"
+              control={<Radio />}
+              label={
+                <Box>
+                  <Typography variant="body1" fontWeight="medium">
+                    Must Sign
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    High priority athlete that should be signed immediately
+                  </Typography>
+                </Box>
+              }
+            />
+            <FormControlLabel
+              value="High Potential"
+              control={<Radio />}
+              label={
+                <Box>
+                  <Typography variant="body1" fontWeight="medium">
+                    High Potential
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Athlete with excellent potential for future development
+                  </Typography>
+                </Box>
+              }
+            />
+            <FormControlLabel
+              value="Monitor"
+              control={<Radio />}
+              label={
+                <Box>
+                  <Typography variant="body1" fontWeight="medium">
+                    Monitor
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Athlete to keep an eye on for potential opportunities
+                  </Typography>
+                </Box>
+              }
+            />
+          </RadioGroup>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelFavorite}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleAddToFavorites}
+            variant="contained"
+            disabled={!selectedCategory}
+          >
+            Add to favorites
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
