@@ -75,7 +75,7 @@ function Dashboard() {
                 Favorites
               </Typography>
               <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                9
+                10
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Saved athletes
@@ -88,13 +88,13 @@ function Dashboard() {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" component="h2" gutterBottom>
-                Messages
+                Messaged
               </Typography>
               <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', color: 'info.main' }}>
                 3
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Unread
+                Athletes
               </Typography>
             </CardContent>
           </Card>
